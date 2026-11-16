@@ -11,7 +11,7 @@ function Cell(){
     return {addToken, getValue};
 }
 
-//Gameboard has no responsibility to know the value in each cell
+//Gameboard has no responsibility to know the value within each cell
 function Gameboard() {
     const rows = 3;
     const columns = 3;
@@ -44,7 +44,7 @@ function Gameboard() {
     };
 
     const printBoard = () => {
-        //Returns an array with the cells values
+        //Returns a 2D array with the cells values
         const boardWithCellValues = board.map((row) => //For each row-array, take cells values
                                                row.map((cell) => cell.getValue()));
         console.log(boardWithCellValues);
@@ -80,6 +80,78 @@ function GameController(playerA = "player A", playerB = "player B"){
         console.log(`${getActivePlayer().name}'s turn.`);
     }
 
+    const checkWinner = (board) => {
+        let tknCountA = 0;
+        let tknCountB = 0;
+
+        const tknAPos = [];
+        const tknBPos = [];
+
+        //All possible win triplets in matrix of 9 elements
+        let combs = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6],
+	    ];
+
+        const boardWithCellValues = board.getBoard().map((row) => 
+                                    row.map((cell) => cell.getValue()));
+
+        //Count tokens amount for each player
+        for(let i = 0; i < boardWithCellValues.length; i++){
+            for(let j = 0; j < boardWithCellValues[i].length; j++){
+
+                if(boardWithCellValues[i][j] === players[0].token){tknCountA++;}
+                else if(boardWithCellValues[i][j] === players[1].token){tknCountB++;}
+
+            }
+        }
+
+        //Works the same, less clear
+        /*boardWithCellValues.forEach((row) => {row.map((cell) => {
+                                                if(cell === players[0].token){tknCountA++;}
+                                                else if(cell === players[1].token){tknCountB++;}
+            })
+        });*/
+
+        console.log("Player A has placed: "+ tknCountA +" tokens");
+        console.log("Player B has placed: "+ tknCountB +" tokens");
+
+        if(tknCountA >= 3 || tknCountB >= 3){
+            //take 2D array, turn into 1D array, loop over 1D array, get index of tokens,
+            //push indexes into respective arrays (A or B), 
+            //check against "combs" for victory.
+            const flattenedCellValuesArray = [].concat.apply([], boardWithCellValues);
+            for(let k = 0; k < flattenedCellValuesArray.length; k++){
+                if(flattenedCellValuesArray[k] === players[0].token){tknAPos.push(k);}
+                else if(flattenedCellValuesArray[k] === players[1].token){tknBPos.push(k);}
+            }
+
+            //Convert each subarray of combs into string, convert Pos arrays into strings
+            //match converted subarrays to converted Pos arrays.
+            //console.log("tknAPos: " + tknAPos);
+            for(const comb of combs) {
+
+                if(comb.every((position) => tknAPos.includes(position))){
+                    return players[0];
+                }
+                else if(comb.every((position) => tknBPos.includes(position))){
+                    return players[1];
+                }
+                
+            }
+
+            return null;
+        }
+
+        //Remember to check for draw --> if(tknCountA + tknCountB >= 8){//draw}
+    };
+
     const playRound = (row, column) => {
         console.log(
             `Setting ${getActivePlayer().name}'s token at coords row:${row}-column:${column}`);
@@ -87,6 +159,7 @@ function GameController(playerA = "player A", playerB = "player B"){
         board.setToken(row, column, getActivePlayer().token);  
 
         /*Check for winner/handle logic*/
+        checkWinner(board);
         
         switchPlayerTurn();
         printNewRound();
