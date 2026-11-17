@@ -50,7 +50,15 @@ function Gameboard() {
         console.log(boardWithCellValues);
     };
 
-    return {getBoard, setToken, printBoard};
+    const resetBoard = () => {
+            for(let i = 0; i < rows; i++){
+                for(let j = 0; j < columns; j++){
+                    board[i][j].addToken(0); 
+            }
+        }
+    };
+
+    return {getBoard, setToken, printBoard, resetBoard};
 }
 
 function GameController(playerA = "player A", playerB = "player B"){
@@ -132,34 +140,54 @@ function GameController(playerA = "player A", playerB = "player B"){
                 else if(flattenedCellValuesArray[k] === players[1].token){tknBPos.push(k);}
             }
 
-            //Convert each subarray of combs into string, convert Pos arrays into strings
-            //match converted subarrays to converted Pos arrays.
-            //console.log("tknAPos: " + tknAPos);
+            //Check presence of any combs sub-array inside Pos arrays.
             for(const comb of combs) {
 
                 if(comb.every((position) => tknAPos.includes(position))){
+                    //console.log(`${players[0].name} wins!`);
                     return players[0];
                 }
                 else if(comb.every((position) => tknBPos.includes(position))){
+                    //console.log(`${players[1].name} wins!`);
                     return players[1];
                 }
                 
             }
-
-            return null;
+            
         }
 
-        //Remember to check for draw --> if(tknCountA + tknCountB >= 8){//draw}
+        if(tknCountA + tknCountB >= 8){
+            return -2; // -2 = draw
+        }
+
+        return -1; // -1 = nothing happens, yet
+
+    };
+
+    const printWinner = (winner) => {
+        if(winner === -2){
+            console.log("DRAW! Nobody wins");
+        } else if(winner !== -1 && winner !== -2){
+            console.log(`${winner.name} wins!`);
+            board.printBoard();
+
+            console.log("A new game begins");
+            board.resetBoard();
+        }
+
+        return;
     };
 
     const playRound = (row, column) => {
+
         console.log(
             `Setting ${getActivePlayer().name}'s token at coords row:${row}-column:${column}`);
 
         board.setToken(row, column, getActivePlayer().token);  
 
         /*Check for winner/handle logic*/
-        checkWinner(board);
+        printWinner(checkWinner(board));
+        
         
         switchPlayerTurn();
         printNewRound();
