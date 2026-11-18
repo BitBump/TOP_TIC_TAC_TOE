@@ -1,3 +1,4 @@
+/*#######################################################################*/
 //Each cell knows its own value
 function Cell(){
     let value = 0;
@@ -10,7 +11,7 @@ function Cell(){
 
     return {addToken, getValue};
 }
-
+/*#######################################################################*/
 //Gameboard has no responsibility to know the value within each cell
 function Gameboard() {
     const rows = 3;
@@ -61,7 +62,8 @@ function Gameboard() {
     return {getBoard, setToken, printBoard, resetBoard};
 }
 
-function GameController(playerA = "player A", playerB = "player B"){
+/*#######################################################################*/
+function GameController(playerA = "Player A", playerB = "Player B"){
     const board = Gameboard();
 
     const players = [
@@ -88,27 +90,16 @@ function GameController(playerA = "player A", playerB = "player B"){
         console.log(`${getActivePlayer().name}'s turn.`);
     }
 
-    const checkWinner = (board) => {
+    const getBoardWithCellValues = (board) =>{
+        return board.getBoard().map((row) => 
+                                     row.map((cell) => cell.getValue()));
+    };
+
+    const countTokens = (board) => {
         let tknCountA = 0;
         let tknCountB = 0;
 
-        const tknAPos = [];
-        const tknBPos = [];
-
-        //All possible win triplets in matrix of 9 elements
-        let combs = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6],
-	    ];
-
-        const boardWithCellValues = board.getBoard().map((row) => 
-                                    row.map((cell) => cell.getValue()));
+        const boardWithCellValues = getBoardWithCellValues(board);
 
         //Count tokens amount for each player
         for(let i = 0; i < boardWithCellValues.length; i++){
@@ -127,14 +118,39 @@ function GameController(playerA = "player A", playerB = "player B"){
             })
         });*/
 
-        console.log("Player A has placed: "+ tknCountA +" tokens");
-        console.log("Player B has placed: "+ tknCountB +" tokens");
+        return [tknCountA, tknCountB];
 
-        if(tknCountA >= 3 || tknCountB >= 3){
+    };
+
+    const checkWinner = (board) => {
+
+
+        let tknCount = [];
+        const tknAPos = [];
+        const tknBPos = [];
+
+        //All possible win triplets in matrix of 9 elements
+        let combs = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6],
+	    ];
+
+        tknCount = countTokens(board);
+
+        console.log(`${players[0].name} has placed: `+ tknCount[0] +` tokens`);
+        console.log(`${players[1].name} has placed: `+ tknCount[1] +` tokens`);
+
+        if(tknCount[0] >= 3 || tknCount[1] >= 3){
             //take 2D array, turn into 1D array, loop over 1D array, get index of tokens,
             //push indexes into respective arrays (A or B), 
             //check against "combs" for victory.
-            const flattenedCellValuesArray = [].concat.apply([], boardWithCellValues);
+            const flattenedCellValuesArray = [].concat.apply([], getBoardWithCellValues(board));
             for(let k = 0; k < flattenedCellValuesArray.length; k++){
                 if(flattenedCellValuesArray[k] === players[0].token){tknAPos.push(k);}
                 else if(flattenedCellValuesArray[k] === players[1].token){tknBPos.push(k);}
@@ -144,24 +160,30 @@ function GameController(playerA = "player A", playerB = "player B"){
             for(const comb of combs) {
 
                 if(comb.every((position) => tknAPos.includes(position))){
-                    //console.log(`${players[0].name} wins!`);
                     return players[0];
                 }
                 else if(comb.every((position) => tknBPos.includes(position))){
-                    //console.log(`${players[1].name} wins!`);
                     return players[1];
                 }
                 
             }
-            
-        }
 
-        if(tknCountA + tknCountB >= 8){
-            return -2; // -2 = draw
-        }
+            if(tknCount[0] + tknCount[1] >= 8){
+
+                return -2; // -2 = draw
+
+            }
+            
+        }        
 
         return -1; // -1 = nothing happens, yet
 
+    };
+
+    
+    const launchNewGame = () => {
+        board.printBoard();        
+        board.resetBoard();
     };
 
     const printWinner = (winner) => {
@@ -169,10 +191,6 @@ function GameController(playerA = "player A", playerB = "player B"){
             console.log("DRAW! Nobody wins");
         } else if(winner !== -1 && winner !== -2){
             console.log(`${winner.name} wins!`);
-            board.printBoard();
-
-            console.log("A new game begins");
-            board.resetBoard();
         }
 
         return;
@@ -187,17 +205,75 @@ function GameController(playerA = "player A", playerB = "player B"){
 
         /*Check for winner/handle logic*/
         printWinner(checkWinner(board));
-        
+        //playRound could return checkWinner's result, so that DisplayHandler can modify
+        //the DOM of consequence.
         
         switchPlayerTurn();
         printNewRound();
+
+        //return checkWinner(board);
     };
 
     //Initial state
     printNewRound();
 
-    return{playRound, getActivePlayer};
+    return{playRound, getActivePlayer, getBoard: board.getBoard, launchNewGame};
     
 }
+/*#######################################################################*/
+function DisplayHandler(){
+    const game = GameController();
+    
+    const newGameButton = document.querySelector(".new_game");
+    const boardContainer = document.querySelector(".game_board");
+    const turnDiv = document.querySelector(".player_turn");
 
-const game = GameController();
+    const updateScreen = () => {
+        boardContainer.textContent = "";
+
+        const board = game.getBoard();
+        const activePlayer = game.getActivePlayer();
+
+        turnDiv.textContent = `${activePlayer.name}'s turn...`;
+
+        board.forEach((row, row_index) =>{
+            row.forEach((cell, col_index) => {
+                const cellButton = document.createElement("button");
+                cellButton.setAttribute("class","cell");
+
+                cellButton.dataset.row = row_index;
+                cellButton.dataset.column = col_index;
+                cellButton.textContent = cell.getValue();
+                boardContainer.appendChild(cellButton);
+            });
+        });
+    };
+
+    function eventListenerBoard(event){
+        row_index = event.target.dataset.row;
+        col_index = event.target.dataset.column;        
+
+        //Check valid cell choice
+        if(!col_index || !row_index){return;}
+
+        game.playRound(row_index, col_index);
+        updateScreen();
+        //receive playRound result and do something with it, -here-
+        //OR! updateScreen could take the result and do something different based on that
+    };
+
+    function eventListenerNewGame(event){
+        game.launchNewGame();
+        updateScreen();
+    };
+
+    boardContainer.addEventListener("click", eventListenerBoard);
+    newGameButton.addEventListener("click", eventListenerNewGame);
+
+    updateScreen();
+
+    return{updateScreen};
+}
+/*#######################################################################*/
+
+DisplayHandler();
