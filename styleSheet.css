@@ -1,0 +1,106 @@
+/*#######################################################################*/
+/*
+  Josh's Custom CSS Reset
+  https://www.joshwcomeau.com/css/custom-css-reset/
+*/
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+*:not(dialog) {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    interpolate-size: allow-keywords;
+  }
+}
+
+body {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+}
+
+p {
+  text-wrap: pretty;
+}
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+#root, #__next {
+  isolation: isolate;
+}
+/*#######################################################################*/
+body{
+    font-size: 16px;
+    color: black;
+    padding-left: 20px;
+}
+
+.game_board,
+.player_turn,
+.new_game{
+    border: 2px black solid;
+    font-size: 3rem;
+}
+
+.game_board{
+    width: 50vw;
+    height: 50vh;
+
+    background-color: bisque;
+    margin: 0px 0px 20px 0px;
+
+    display: grid;
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 10px;
+}
+
+.player_turn{
+    width: 50vw;
+    height:10vh;
+
+    background-color: aquamarine;
+    margin: 20px 0px 20px 0px;
+
+    
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+
+  border: 1px solid black;
+  background: lightyellow;
+  
+  cursor: pointer;
+}
+
+
+/*#######################################################################*/
