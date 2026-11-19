@@ -48,7 +48,6 @@ function Gameboard() {
         //Returns a 2D array with the cells values
         const boardWithCellValues = board.map((row) => //For each row-array, take cells values
                                                row.map((cell) => cell.getValue()));
-        console.log(boardWithCellValues);
     };
 
     const resetBoard = () => {
@@ -78,6 +77,8 @@ function GameController(playerA = "Player A", playerB = "Player B"){
     ];
 
     let activePlayer = players[0];
+    let gameOver = false;
+    let gameResult = -1;
 
     const switchPlayerTurn = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
@@ -87,7 +88,6 @@ function GameController(playerA = "Player A", playerB = "Player B"){
 
     const printNewRound = () => {
         board.printBoard();
-        console.log(`${getActivePlayer().name}'s turn.`);
     }
 
     const getBoardWithCellValues = (board) =>{
@@ -143,9 +143,6 @@ function GameController(playerA = "Player A", playerB = "Player B"){
 
         tknCount = countTokens(board);
 
-        console.log(`${players[0].name} has placed: `+ tknCount[0] +` tokens`);
-        console.log(`${players[1].name} has placed: `+ tknCount[1] +` tokens`);
-
         if(tknCount[0] >= 3 || tknCount[1] >= 3){
             //take 2D array, turn into 1D array, loop over 1D array, get index of tokens,
             //push indexes into respective arrays (A or B), 
@@ -160,17 +157,22 @@ function GameController(playerA = "Player A", playerB = "Player B"){
             for(const comb of combs) {
 
                 if(comb.every((position) => tknAPos.includes(position))){
-                    return players[0];
+                    gameOver = true;
+                    gameResult = players[0]
+                    return gameResult;
                 }
                 else if(comb.every((position) => tknBPos.includes(position))){
-                    return players[1];
+                    gameOver = true;
+                    gameResult = players[1];
+                    return gameResult;
                 }
                 
             }
 
-            if(tknCount[0] + tknCount[1] >= 8){
-
-                return -2; // -2 = draw
+            if(tknCount[0] + tknCount[1] === 9){
+                gameOver = true;
+                gameResult = -2
+                return gameResult; 
 
             }
             
@@ -182,36 +184,24 @@ function GameController(playerA = "Player A", playerB = "Player B"){
 
     
     const launchNewGame = () => {
+        gameOver = false;
+        gameResult = -1;
         board.printBoard();        
         board.resetBoard();
     };
 
-    const printWinner = (winner) => {
-        if(winner === -2){
-            console.log("DRAW! Nobody wins");
-        } else if(winner !== -1 && winner !== -2){
-            console.log(`${winner.name} wins!`);
-        }
-
-        return;
-    };
-
     const playRound = (row, column) => {
 
-        console.log(
-            `Setting ${getActivePlayer().name}'s token at coords row:${row}-column:${column}`);
+        if(gameOver){return gameResult;}
+
+        let winner = "";
 
         board.setToken(row, column, getActivePlayer().token);  
-
-        /*Check for winner/handle logic*/
-        printWinner(checkWinner(board));
-        //playRound could return checkWinner's result, so that DisplayHandler can modify
-        //the DOM of consequence.
         
         switchPlayerTurn();
         printNewRound();
 
-        //return checkWinner(board);
+        return checkWinner(board);
     };
 
     //Initial state
@@ -228,13 +218,23 @@ function DisplayHandler(){
     const boardContainer = document.querySelector(".game_board");
     const turnDiv = document.querySelector(".player_turn");
 
-    const updateScreen = () => {
+    let roundResult = "";
+
+    const updateScreen = (roundResult) => {
         boardContainer.textContent = "";
 
         const board = game.getBoard();
         const activePlayer = game.getActivePlayer();
 
-        turnDiv.textContent = `${activePlayer.name}'s turn...`;
+        if(roundResult === -2){
+            turnDiv.textContent = "DRAW! Nobody wins...";
+        } else if(roundResult !== -1 && //No winner, yet
+                  roundResult !== -2 && //DRAW
+                  roundResult !== undefined){
+            turnDiv.textContent = `${roundResult.name} (token: "${roundResult.token}") wins!`;
+        } else {
+            turnDiv.textContent = `${activePlayer.name}'s turn...`;
+        }        
 
         board.forEach((row, row_index) =>{
             row.forEach((cell, col_index) => {
@@ -244,10 +244,19 @@ function DisplayHandler(){
                 cellButton.dataset.row = row_index;
                 cellButton.dataset.column = col_index;
                 cellButton.textContent = cell.getValue();
+
+                if(roundResult !== -1 && roundResult !== undefined){
+                    if(cell.getValue() === 0){
+                        cellButton.disabled = true;
+                    }
+                }
+
                 boardContainer.appendChild(cellButton);
             });
         });
     };
+
+    
 
     function eventListenerBoard(event){
         row_index = event.target.dataset.row;
@@ -256,13 +265,13 @@ function DisplayHandler(){
         //Check valid cell choice
         if(!col_index || !row_index){return;}
 
-        game.playRound(row_index, col_index);
-        updateScreen();
-        //receive playRound result and do something with it, -here-
-        //OR! updateScreen could take the result and do something different based on that
+        roundResult = game.playRound(row_index, col_index);
+        updateScreen(roundResult);
+                
     };
 
     function eventListenerNewGame(event){
+        roundResult = "";
         game.launchNewGame();
         updateScreen();
     };
