@@ -53,11 +53,23 @@ body{
     padding-left: 20px;
 }
 
+input,
+label,
 .game_board,
 .player_turn,
 .new_game{
-    border: 2px black solid;
     font-size: 3rem;
+}
+
+.game_board,
+.player_turn,
+.new_game{
+  border: 2px black solid;
+}
+
+
+input{
+  margin: 0px 0px 20px 0px;
 }
 
 .game_board{
