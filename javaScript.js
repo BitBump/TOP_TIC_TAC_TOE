@@ -44,12 +44,6 @@ function Gameboard() {
 
     };
 
-    const printBoard = () => {
-        //Returns a 2D array with the cells values
-        const boardWithCellValues = board.map((row) => //For each row-array, take cells values
-                                               row.map((cell) => cell.getValue()));
-    };
-
     const resetBoard = () => {
             for(let i = 0; i < rows; i++){
                 for(let j = 0; j < columns; j++){
@@ -58,11 +52,11 @@ function Gameboard() {
         }
     };
 
-    return {getBoard, setToken, printBoard, resetBoard};
+    return {getBoard, setToken, resetBoard};
 }
 
 /*#######################################################################*/
-function GameController(playerA = "Player A", playerB = "Player B"){
+function GameController(playerA, playerB){
     const board = Gameboard();
 
     const players = [
@@ -85,10 +79,6 @@ function GameController(playerA = "Player A", playerB = "Player B"){
     }
 
     const getActivePlayer = () => activePlayer;
-
-    const printNewRound = () => {
-        board.printBoard();
-    }
 
     const getBoardWithCellValues = (board) =>{
         return board.getBoard().map((row) => 
@@ -185,8 +175,7 @@ function GameController(playerA = "Player A", playerB = "Player B"){
     
     const launchNewGame = () => {
         gameOver = false;
-        gameResult = -1;
-        board.printBoard();        
+        gameResult = -1;       
         board.resetBoard();
     };
 
@@ -194,31 +183,27 @@ function GameController(playerA = "Player A", playerB = "Player B"){
 
         if(gameOver){return gameResult;}
 
-        let winner = "";
-
         board.setToken(row, column, getActivePlayer().token);  
         
         switchPlayerTurn();
-        printNewRound();
 
         return checkWinner(board);
     };
-
-    //Initial state
-    printNewRound();
 
     return{playRound, getActivePlayer, getBoard: board.getBoard, launchNewGame};
     
 }
 /*#######################################################################*/
 function DisplayHandler(){
-    const game = GameController();
-    
-    const newGameButton = document.querySelector(".new_game");
-    const boardContainer = document.querySelector(".game_board");
-    const turnDiv = document.querySelector(".player_turn");
 
-    let roundResult = "";
+    const turnDiv = document.querySelector(".player_turn");
+    const newGameButton = document.querySelector(".new_game");
+    const boardContainer = document.querySelector(".game_board");    
+
+    let game = null;
+    let playerA = "";
+    let playerB = "";
+    let roundResult = "";      
 
     const updateScreen = (roundResult) => {
         boardContainer.textContent = "";
@@ -256,7 +241,15 @@ function DisplayHandler(){
         });
     };
 
-    
+    const initializeGame = () => {
+        playerA = document.querySelector("#playerA").value;
+        playerB = document.querySelector("#playerB").value;
+
+        playerA === "" ? playerA = "Player A" : "";
+        playerB === "" ? playerB = "Player B" : "";
+
+        return GameController(playerA, playerB);
+    };
 
     function eventListenerBoard(event){
         row_index = event.target.dataset.row;
@@ -272,16 +265,13 @@ function DisplayHandler(){
 
     function eventListenerNewGame(event){
         roundResult = "";
+        game = initializeGame();        
         game.launchNewGame();
         updateScreen();
     };
 
     boardContainer.addEventListener("click", eventListenerBoard);
     newGameButton.addEventListener("click", eventListenerNewGame);
-
-    updateScreen();
-
-    return{updateScreen};
 }
 /*#######################################################################*/
 
